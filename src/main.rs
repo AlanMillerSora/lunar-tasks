@@ -1,9 +1,11 @@
 mod app;
+mod calendar;
 mod daemon;
 mod hypr;
 mod ipc;
 mod model;
 mod session;
+mod stats;
 mod theme;
 mod util;
 

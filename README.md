@@ -72,9 +72,11 @@ hyprctl reload
 
 ## State and window settings
 
-- `~/.local/share/tasks-rs/state.json` — same v2 schema as before:
+- `~/.local/share/tasks-rs/state.json` — v2 schema plus optional
+  `priority/repeat/remind_lead/completed_at`:
   `taskId/title/done/parentId/notes/created/expanded/due/remindAt/notified/deletedAt`.
-- `~/.local/share/tasks-rs/settings.json` — width, height, x, y.
+- `~/.local/share/tasks-rs/settings.json` — width, height, x, y, `compact`,
+  `sort`, `reduce_motion`.
 - Writes are debounced (300 ms), atomic (`state.json.tmp` + rename), and keep
   `state.json.bak`.
 - If `state.json` is unreadable the app shows an error banner, disables editing
@@ -83,29 +85,69 @@ hyprctl reload
 - Dangling parents, self-parents and cycles are pruned on load; purging a parent
   removes its subtree.
 
-Window defaults to 640×780 at the top-right of the focused monitor (2776,24 on
-this 3440×1440 display). Size/position are saved on hide/quit and reapplied with
-`hyprctl` (Wayland clients cannot position themselves).
+Window defaults to 660×780 at the top-right of the focused monitor (a Hyprland
+rule pins it to 640×560 on this 3440×1440 display). Size/position are saved on
+hide/quit and reapplied with `hyprctl` (Wayland clients cannot position
+themselves).
 
 ## Features
 
-- git-like graph: lane = nesting depth, rails, orthogonal branches;
-- drag a node onto another row (or click the link icon) to link, with animated
-  link formation and a toast; drag the ⠿ handle to reorder;
-- `#tags` parsed from title and notes, tag chips, click-to-filter, `/ #tag`;
+- quiet graphite panel driven by the current ColorEclipse palette, a compact
+  tree mark, animated completion bar and segmented All/Open/Done/Trash filters;
+- smart views Inbox / Today / Upcoming / Overdue / No date with grouped sections,
+  per-section counts and collapsible headers;
+- manual / due-date / priority sorting, persisted in settings;
+- priorities P1–P3, visible as chips and in compact rows as a small colored rail;
+- git-like graph: lane = nesting depth, smooth curved branches and no line
+  between unrelated roots; the selected task's branch path is highlighted;
+- drag a node onto another row (or click the link icon) to link without moving
+  the row, with draw-on link animation and a toast; drag the ⠿ handle to reorder
+  intentionally;
+- `#tags` parsed from title and notes, deterministic tag colors, click-to-filter,
+  `/ #tag`, plus a collapsible tag rail with per-tag counts;
 - parent chip `↳ parent` under the title, click to jump to the parent;
-- expand/collapse per row (animated): full wrapped notes, `+ Subtask`, `Unlink`,
-  `Mark done`, `Delete`; collapsed rows show a one-line note preview;
+- inline title and notes editing (double-click a title, or use the row menu);
+- a `⋯` row menu for edit, full editor, due date, priority, subtask, link,
+  duplicate (with or without subtasks), complete/reopen and delete;
+- expand/collapse per row (animated): full wrapped notes, `Add subtask`,
+  `Unlink`, `Mark done`, `Delete`; collapsed rows show an ellipsized one-line
+  note preview;
 - hover affordances for due, edit, link, delete and drag; selected rows keep
   them visible;
-- due chip always visible when set, red when overdue, reminder bell state;
+- compact-row mode (header `≡`) persisted in settings;
+- focus mode (header `◎`) with one calm task card, subtask progress and
+  keyboard navigation;
+- due chip always visible when set, red when overdue, reminder bell state; the
+  due dialog includes a month calendar, time presets, repeat schedule, custom
+  reminder lead and a natural-language field;
+- recurring tasks (daily / weekly / monthly) spawn their next occurrence when
+  completed;
+- smart capture in the command bar: `!p1`–`!p3`, `#tags`, and natural dates in
+  English or Russian (`tomorrow 18:00`, `завтра 18:00`, `через 2 часа`,
+  weekdays), with a live chip preview;
 - trash filter with counts, Restore and Delete forever (batch too), undo/redo
-  (`Ctrl+Z` / `Ctrl+Shift+Z`), multi-select batch bar (`Ctrl+A`);
-- filters All/Open/Done/Trash (`Ctrl+1..4`), fuzzy search, tag search, search
-  clear chips, explicit empty states;
+  (`Ctrl+Z` / `Ctrl+Shift+Z`), multi-select batch bar (`Ctrl+A`), and an
+  **Undo** action in the toast after destructive/batch actions;
+- fuzzy search and tag search, clear chips, centered empty states with a small
+  tree/check/bin motif;
+- command palette (`Ctrl+K` / header `⌘`): views, filters, sorting, actions,
+  data tools and fuzzy task jump;
+- statistics window with open/done/overdue/trash totals and a 4-week completion
+  heatmap;
+- data tools: export Markdown/JSON, import `export.json`, restore
+  `state.json.bak`, open the data folder;
+- a compact command bar with focus ring, Enter keycap, contextual hint line,
+  and fading toasts;
+- keyboard navigation: `↑`/`↓` or `j`/`k` move, `Space` completes, `Enter`
+  edits, `M` opens the row menu, `D` sets a due date, `1…5` switch smart views
+  (`Alt+1…5` works while a field is focused), `Esc` closes;
+- reduced-motion mode for the custom progress, expand, completion and link
+  animations;
+- drag-and-drop with a row ghost, insertion marker, target highlight and
+  edge auto-scroll; completion pulses and collapses the row;
 - reminders call `notify-send` while the daemon runs; the systemd timer is a
   fallback and skips itself when the daemon is alive;
-- header shows completion, open/done counts and tray/daemon status.
+- header shows completion, open/done/overdue counts and tray/daemon status.
 
 ## Measured on this machine
 
@@ -130,7 +172,9 @@ cargo test
 ```
 
 Unit tests cover hashtag parsing, tag/text search, dangling-parent/cycle
-pruning, atomic saves/backups, unreadable-state handling and time parsing.
+pruning, atomic saves/backups, unreadable-state handling, calendar grids,
+Markdown export, activity buckets, recurrence/next-due helpers and English/
+Russian time parsing (39 tests).
 
 Reminders can be tested manually by setting `remindAt` a few seconds in the past
 on a temporary task, waiting ≤10 s for the daemon (or running `--remind` while

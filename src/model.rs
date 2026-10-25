@@ -1,3 +1,4 @@
+use chrono::TimeZone;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use std::fs;
@@ -11,6 +12,10 @@ fn default_version() -> u32 {
 }
 
 fn is_zero(v: &i64) -> bool {
+    *v == 0
+}
+
+fn is_zero_u8(v: &u8) -> bool {
     *v == 0
 }
 
@@ -41,6 +46,14 @@ pub struct Task {
     pub notified: bool,
     #[serde(rename = "deletedAt", default, skip_serializing_if = "is_zero")]
     pub deleted_at: i64,
+    #[serde(default, skip_serializing_if = "is_zero_u8")]
+    pub priority: u8,
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub repeat: String,
+    #[serde(default, skip_serializing_if = "is_zero")]
+    pub remind_lead: i64,
+    #[serde(default, skip_serializing_if = "is_zero")]
+    pub completed_at: i64,
 }
 
 impl Task {
@@ -187,6 +200,25 @@ pub fn parse_tags(text: &str) -> Vec<String> {
     out
 }
 
+/// Tags used by non-deleted tasks, case-insensitively merged, with counts.
+/// Sorted alphabetically (case-insensitive). The first spelling encountered wins.
+pub fn tag_counts(doc: &Doc) -> Vec<(String, usize)> {
+    let mut out: Vec<(String, usize)> = Vec::new();
+    for t in doc.items.iter().filter(|t| t.deleted_at == 0) {
+        for tag in t.tags() {
+            match out
+                .iter_mut()
+                .find(|(name, _)| name.eq_ignore_ascii_case(&tag))
+            {
+                Some((_, count)) => *count += 1,
+                None => out.push((tag, 1)),
+            }
+        }
+    }
+    out.sort_by(|a, b| a.0.to_lowercase().cmp(&b.0.to_lowercase()));
+    out
+}
+
 pub fn task_matches(t: &Task, query: &str, tag: Option<&str>) -> bool {
     if let Some(want) = tag {
         if !t.tags().iter().any(|t| t.eq_ignore_ascii_case(want)) {
@@ -214,6 +246,36 @@ pub fn subsequence(hay: &str, needle: &str) -> bool {
     needle.chars().all(|n| chars.by_ref().any(|h| h == n))
 }
 
+/// Reminder lead time for a task (defaults to ten minutes).
+pub fn task_lead(t: &Task) -> i64 {
+    if t.remind_lead > 0 {
+        t.remind_lead
+    } else {
+        600_000
+    }
+}
+
+/// Next occurrence for a repeating task, advanced until it is in the future.
+/// `repeat` accepts "daily", "weekly" and "monthly".
+pub fn next_due(due: i64, repeat: &str) -> Option<i64> {
+    if due <= 0 || repeat.is_empty() {
+        return None;
+    }
+    let mut dt = chrono::Local.timestamp_millis_opt(due).single()?;
+    let now = chrono::Local::now();
+    let mut guard = 0;
+    while dt <= now && guard < 500 {
+        guard += 1;
+        dt = match repeat {
+            "daily" => dt + chrono::Duration::days(1),
+            "weekly" => dt + chrono::Duration::days(7),
+            "monthly" => dt.checked_add_months(chrono::Months::new(1))?,
+            _ => return None,
+        };
+    }
+    Some(dt.timestamp_millis())
+}
+
 pub fn new_task(title: &str, parent: &str) -> Task {
     let title = title.trim();
     Task {
@@ -228,6 +290,10 @@ pub fn new_task(title: &str, parent: &str) -> Task {
         remind_at: 0,
         notified: false,
         deleted_at: 0,
+        priority: 0,
+        repeat: String::new(),
+        remind_lead: 0,
+        completed_at: 0,
     }
 }
 
@@ -249,6 +315,12 @@ pub struct Settings {
     pub x: Option<f32>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub y: Option<f32>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub compact: Option<bool>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub sort: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub reduce_motion: Option<bool>,
 }
 
 pub fn load_settings() -> Settings {
@@ -282,6 +354,60 @@ mod tests {
         let t = task("#paren #tag! #a/b", "");
         assert_eq!(t.tags(), vec!["paren", "tag", "a/b"]);
         assert!(parse_tags("no tags here").is_empty());
+    }
+
+    #[test]
+    fn tag_counts_merges_case_insensitively() {
+        let mut doc = Doc::default();
+        doc.items.push(task("#Work", ""));
+        doc.items.push(task("#work", ""));
+        doc.items.push(task("#WORK", ""));
+        assert_eq!(tag_counts(&doc), vec![("Work".to_string(), 3)]);
+    }
+
+    #[test]
+    fn tag_counts_ignores_deleted_tasks() {
+        let mut doc = Doc::default();
+        doc.items.push(task("#keep", ""));
+        let mut gone = task("#gone #keep", "");
+        gone.deleted_at = 42;
+        doc.items.push(gone);
+        assert_eq!(tag_counts(&doc), vec![("keep".to_string(), 1)]);
+        assert!(tag_counts(&Doc::default()).is_empty());
+    }
+
+    #[test]
+    fn tag_counts_counts_tag_once_per_task() {
+        let mut doc = Doc::default();
+        doc.items.push(task("write #work", "notes #work and #WORK"));
+        assert_eq!(tag_counts(&doc), vec![("work".to_string(), 1)]);
+    }
+
+    #[test]
+    fn settings_compact_is_optional_and_roundtrips() {
+        let s: Settings = serde_json::from_str(r#"{"width": 80.0}"#).unwrap();
+        assert_eq!(s.compact, None);
+        assert!(!serde_json::to_string(&s).unwrap().contains("compact"));
+
+        let s = Settings {
+            compact: Some(true),
+            ..Settings::default()
+        };
+        let text = serde_json::to_string(&s).unwrap();
+        assert!(text.contains(r#""compact":true"#));
+        let back: Settings = serde_json::from_str(&text).unwrap();
+        assert_eq!(back.compact, Some(true));
+
+        let s = Settings {
+            compact: Some(false),
+            ..Settings::default()
+        };
+        let text = serde_json::to_string(&s).unwrap();
+        let back: Settings = serde_json::from_str(&text).unwrap();
+        assert_eq!(back.compact, Some(false));
+
+        let legacy: Settings = serde_json::from_str("{}").unwrap();
+        assert_eq!(legacy.compact, None);
     }
 
     #[test]
@@ -333,6 +459,25 @@ mod tests {
         let back = load_doc(&path).unwrap().unwrap();
         assert_eq!(back.items.len(), 2);
         let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn next_due_advances_recurrence() {
+        let base = chrono::Local::now().timestamp_millis() - 10 * 86_400_000;
+        let next = next_due(base, "daily").expect("daily");
+        assert!(next > base);
+        assert!(next > chrono::Local::now().timestamp_millis() - 86_400_000);
+        assert!(next_due(base, "weekly").unwrap() > next);
+        assert!(next_due(0, "daily").is_none());
+        assert!(next_due(base, "nonsense").is_none());
+    }
+
+    #[test]
+    fn lead_defaults_to_ten_minutes() {
+        let mut t = new_task("x", "");
+        assert_eq!(task_lead(&t), 600_000);
+        t.remind_lead = 3_600_000;
+        assert_eq!(task_lead(&t), 3_600_000);
     }
 
     #[test]
