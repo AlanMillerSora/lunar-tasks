@@ -786,6 +786,43 @@ impl App {
                     changed = true;
                 }
             }
+        } else if let Some(rect) = ctx.input(|i| i.viewport().outer_rect) {
+            if self
+                .settings
+                .x
+                .map(|x| (x - rect.min.x).abs() > 1.0)
+                .unwrap_or(true)
+            {
+                self.settings.x = Some(rect.min.x);
+                changed = true;
+            }
+            if self
+                .settings
+                .y
+                .map(|y| (y - rect.min.y).abs() > 1.0)
+                .unwrap_or(true)
+            {
+                self.settings.y = Some(rect.min.y);
+                changed = true;
+            }
+            if self
+                .settings
+                .width
+                .map(|w| (w - rect.width()).abs() > 1.0)
+                .unwrap_or(true)
+            {
+                self.settings.width = Some(rect.width());
+                changed = true;
+            }
+            if self
+                .settings
+                .height
+                .map(|h| (h - rect.height()).abs() > 1.0)
+                .unwrap_or(true)
+            {
+                self.settings.height = Some(rect.height());
+                changed = true;
+            }
         } else {
             let size = ctx.content_rect().size();
             if (size.x - self.last_size.x).abs() > 1.0 || (size.y - self.last_size.y).abs() > 1.0 {
