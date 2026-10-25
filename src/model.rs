@@ -80,7 +80,7 @@ impl Default for Doc {
 }
 
 pub fn home() -> PathBuf {
-    PathBuf::from(std::env::var("HOME").unwrap_or_else(|_| "/home/sora".into()))
+    PathBuf::from(std::env::var("HOME").unwrap_or_else(|_| "/tmp".into()))
 }
 
 pub fn state_path() -> PathBuf {

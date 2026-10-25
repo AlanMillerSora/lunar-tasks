@@ -1,0 +1,7 @@
+[Unit]
+Description=Tasks — desktop reminders (headless)
+After=graphical-session.target
+
+[Service]
+Type=oneshot
+ExecStart=@BIN@ --remind

@@ -1,1 +1,4 @@
 /target
+/export.json
+/export.md
+*.log

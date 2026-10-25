@@ -1,0 +1,14 @@
+[Desktop Entry]
+Type=Application
+Name=Tasks
+GenericName=Task manager
+Comment=Tree-shaped task manager with tags, due dates and reminders
+Exec=@BIN@
+TryExec=@BIN@
+Icon=tasks-rs
+Terminal=false
+Categories=Utility;ProjectManagement;
+Keywords=todo;tasks;reminders;notes;
+StartupNotify=false
+StartupWMClass=tasks-rs
+X-GNOME-UsesNotifications=true

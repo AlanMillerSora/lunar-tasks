@@ -1,0 +1,13 @@
+[Unit]
+Description=Tasks resident tray daemon
+After=dbus.socket
+
+[Service]
+Type=simple
+ExecStart=@BIN@ --daemon
+Restart=on-failure
+RestartSec=2
+SyslogIdentifier=tasks-rs
+
+[Install]
+WantedBy=default.target
