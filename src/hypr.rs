@@ -52,6 +52,29 @@ pub fn top_right(w: f32) -> Option<(f32, f32)> {
     Some((m.x + m.w - w - 24.0, m.y + 24.0))
 }
 
+pub fn focus_client() -> bool {
+    let Some(v) = hyprctl_json(&["clients", "-j"]) else {
+        return false;
+    };
+    let Some(arr) = v.as_array() else {
+        return false;
+    };
+    let Some(c) = arr.iter().find(|c| {
+        c["class"].as_str() == Some("tasks-rs") || c["initialClass"].as_str() == Some("tasks-rs")
+    }) else {
+        return false;
+    };
+    let Some(addr) = c["address"].as_str() else {
+        return false;
+    };
+    let arg = format!("hl.dsp.focus({{window=\"address:{addr}\"}})");
+    session::command("hyprctl")
+        .args(["dispatch", &arg])
+        .output()
+        .map(|o| o.status.success())
+        .unwrap_or(false)
+}
+
 pub fn move_client(x: f32, y: f32) -> bool {
     let Some(v) = hyprctl_json(&["clients", "-j"]) else {
         return false;

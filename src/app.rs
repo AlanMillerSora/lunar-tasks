@@ -56,6 +56,7 @@ pub struct App {
     last_save: Instant,
     toast: Option<(String, Instant)>,
     link_from: Option<String>,
+    link_drag: Option<String>,
     link_flash: Option<LinkFlash>,
     multi: HashSet<String>,
     drag_id: Option<String>,
@@ -160,6 +161,7 @@ impl App {
             last_save: Instant::now(),
             toast: None,
             link_from: None,
+            link_drag: None,
             link_flash: None,
             multi: HashSet::new(),
             drag_id: None,
@@ -729,6 +731,7 @@ impl App {
         self.opened_at = Instant::now();
         ctx.send_viewport_cmd(egui::ViewportCommand::Visible(true));
         ctx.send_viewport_cmd(egui::ViewportCommand::Focus);
+        let _ = hypr::focus_client();
         ctx.request_repaint();
     }
 
@@ -855,6 +858,7 @@ impl App {
                 }
             } else if cmd == "add-prompt" {
                 self.show_window(ctx);
+                self.multi.clear();
                 self.input_parent = None;
                 self.focus_input = true;
             } else if cmd == "quit" {
@@ -1041,6 +1045,7 @@ impl App {
                 }
                 if resp.clicked() {
                     self.filter = f;
+                    self.multi.clear();
                 }
                 ui.add_space(6.0);
             }
@@ -1439,11 +1444,15 @@ impl App {
                     rgba(self.theme.bg, done_t),
                 );
             }
-            if nresp.clicked() && self.filter != Filter::Trash {
+            if nresp.clicked()
+                && self.filter != Filter::Trash
+                && self.link_from.is_none()
+                && self.link_drag.is_none()
+            {
                 toggle_id = Some(t.id.clone());
             }
             if nresp.drag_started() && self.filter != Filter::Trash {
-                self.link_from = Some(t.id.clone());
+                self.link_drag = Some(t.id.clone());
                 self.selected = Some(t.id.clone());
             }
 
@@ -1808,7 +1817,8 @@ impl App {
                 && (hovered
                     || selected
                     || self.drag_id.as_deref() == Some(t.id.as_str())
-                    || self.link_from.as_deref() == Some(t.id.as_str()))
+                    || self.link_from.as_deref() == Some(t.id.as_str())
+                    || self.link_drag.as_deref() == Some(t.id.as_str()))
             {
                 let by = row.top() + 39.0;
                 let mut bx = row.right() - 12.0;
@@ -1919,8 +1929,8 @@ impl App {
             );
         }
 
-        // Link drag line.
-        if let Some(from) = self.link_from.clone() {
+        // Link line (node drag or click-to-link mode).
+        if let Some(from) = self.link_from.clone().or_else(|| self.link_drag.clone()) {
             if let Some(r) = pos_of(&from) {
                 if let Some(ptr) = ui.ctx().input(|i| i.pointer.interact_pos()) {
                     let start = Pos2::new(lane_x(self.lane(&from)), node_y(r));
@@ -1999,6 +2009,7 @@ impl App {
         if let Some((from, to)) = link_now {
             self.link(&from, &to);
             self.link_from = None;
+            self.link_drag = None;
         }
         if let Some(id) = toggle_id {
             self.toggle(&id);
@@ -2077,18 +2088,17 @@ impl App {
             self.input.clear();
         }
 
-        // Link drag release.
-        if self.link_from.is_some() && ui.ctx().input(|i| i.pointer.any_released()) {
-            if let Some(ptr) = ui.ctx().input(|i| i.pointer.interact_pos()) {
-                if let Some((to, _)) = positions.iter().find(|(_, r)| r.contains(ptr)) {
-                    if let Some(from) = self.link_from.clone() {
+        // Node-drag link release (click-to-link mode is handled above).
+        if self.link_drag.is_some() && ui.ctx().input(|i| i.pointer.any_released()) {
+            if let Some(from) = self.link_drag.take() {
+                if let Some(ptr) = ui.ctx().input(|i| i.pointer.interact_pos()) {
+                    if let Some((to, _)) = positions.iter().find(|(_, r)| r.contains(ptr)) {
                         if &from != to {
                             self.link(&from, to);
                         }
                     }
                 }
             }
-            self.link_from = None;
         }
 
         if let Some(id) = self.scroll_to.clone() {
@@ -2660,8 +2670,9 @@ impl eframe::App for App {
             && self.edit.is_none()
             && self.due_edit.is_none()
         {
-            if self.link_from.is_some() {
+            if self.link_from.is_some() || self.link_drag.is_some() {
                 self.link_from = None;
+                self.link_drag = None;
             } else if !self.multi.is_empty() {
                 self.multi.clear();
             } else if self.input_parent.is_some() {
@@ -2756,7 +2767,7 @@ impl eframe::App for App {
         self.ui_due_window(&ctx);
         self.ui_toast(&ctx);
 
-        if self.link_from.is_some() {
+        if self.link_from.is_some() || self.link_drag.is_some() {
             ctx.request_repaint();
         }
         if self.toast.is_some() {
