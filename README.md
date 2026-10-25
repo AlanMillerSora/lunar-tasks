@@ -4,6 +4,7 @@ A native Linux task manager built with Rust and egui: a tree-shaped task list
 with inline editing, tags, due dates, reminders, smart views, a focus mode and
 a resident tray daemon.
 
+[![CI](https://github.com/AlanMillerSora/lunar-tasks/actions/workflows/ci.yml/badge.svg)](https://github.com/AlanMillerSora/lunar-tasks/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-7fe2f1)](LICENSE)
 [![Rust](https://img.shields.io/badge/rust-1.85%2B-74a2cf)](https://www.rust-lang.org)
 [![Platform](https://img.shields.io/badge/platform-Linux%20%2F%20Wayland-9aa4b2)]()
@@ -108,7 +109,7 @@ Wayland session.
 ## Quick start
 
 ```bash
-git clone https://github.com/your-name/lunar-tasks.git
+git clone https://github.com/AlanMillerSora/lunar-tasks.git
 cd lunar-tasks
 cargo run --release -- --gui
 ```
