@@ -34,7 +34,7 @@ for unit in tasks-rs.service tasks-rs-remind.service; do
 done
 install -Dm644 contrib/tasks-rs-remind.timer "$UNIT_DIR/tasks-rs-remind.timer"
 
-if command -v systemctl >/dev/null 2>&1; then
+if [ "${TASKS_RS_NO_SYSTEMD:-0}" != "1" ] && command -v systemctl >/dev/null 2>&1; then
     systemctl --user daemon-reload || true
     systemctl --user enable --now tasks-rs.service || true
     systemctl --user enable --now tasks-rs-remind.timer || true

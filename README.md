@@ -132,7 +132,8 @@ What it installs:
 | `~/.config/systemd/user/tasks-rs-remind.{service,timer}` | reminder fallback |
 
 If systemd is available the script enables and starts the daemon and reminder
-timer. To do it manually:
+timer. Set `TASKS_RS_NO_SYSTEMD=1` when calling `install.sh` to skip service
+management. To do it manually:
 
 ```bash
 systemctl --user daemon-reload
