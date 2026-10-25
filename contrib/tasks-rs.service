@@ -1,5 +1,5 @@
 [Unit]
-Description=Tasks resident tray daemon
+Description=Lunar Tasks resident tray daemon
 After=dbus.socket
 
 [Service]

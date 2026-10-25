@@ -227,11 +227,11 @@ pub fn run_gui(start_hidden: bool) -> eframe::Result<()> {
             .with_always_on_top()
             .with_resizable(true)
             .with_app_id("tasks-rs")
-            .with_title("Tasks"),
+            .with_title("Lunar Tasks"),
         ..Default::default()
     };
     eframe::run_native(
-        "Tasks",
+        "Lunar Tasks",
         options,
         Box::new(move |cc| {
             theme::install_fonts(&cc.egui_ctx);
@@ -2602,7 +2602,7 @@ impl App {
         ui.horizontal(|ui| {
             let (mark, mresp) = ui.allocate_exact_size(Vec2::new(30.0, 30.0), Sense::hover());
             paint_app_mark(ui.painter(), mark, &self.theme);
-            mresp.on_hover_text("Tasks");
+            mresp.on_hover_text("Lunar Tasks");
             ui.add_space(9.0);
             ui.vertical(|ui| {
                 ui.spacing_mut().item_spacing.y = 1.0;

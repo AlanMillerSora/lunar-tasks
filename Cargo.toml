@@ -5,7 +5,7 @@ edition = "2024"
 rust-version = "1.85"
 license = "MIT"
 readme = "README.md"
-description = "Native tree-shaped task manager with tags, due dates, reminders and a resident tray daemon"
+description = "Lunar Tasks — native tree-shaped task manager with tags, due dates, reminders and a resident tray daemon"
 keywords = ["tasks", "todo", "egui", "wayland", "hyprland"]
 
 [dependencies]

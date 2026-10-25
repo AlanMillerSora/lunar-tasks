@@ -1,4 +1,4 @@
-# tasks-rs
+# Lunar Tasks
 
 A native Linux task manager built with Rust and egui: a tree-shaped task list
 with inline editing, tags, due dates, reminders, smart views, a focus mode and
@@ -9,9 +9,14 @@ a resident tray daemon.
 [![Platform](https://img.shields.io/badge/platform-Linux%20%2F%20Wayland-9aa4b2)]()
 
 <p align="center">
-  <img src="docs/tasks-main.png" width="640" alt="Tasks main window">
+  <img src="docs/tasks-main.png" width="640" alt="Lunar Tasks main window">
 </p>
 
+> **Naming.** The product is **Lunar Tasks**. The binary, systemd units,
+> sockets and the state directory intentionally keep the historical name
+> `tasks-rs`, so existing installs, Hyprland rules and tray entries keep
+> working.
+>
 > Screenshots use demo data. The palette follows the current ColorEclipse
 > palette automatically.
 
@@ -103,8 +108,8 @@ Wayland session.
 ## Quick start
 
 ```bash
-git clone https://github.com/your-name/tasks-rs.git
-cd tasks-rs
+git clone https://github.com/your-name/lunar-tasks.git
+cd lunar-tasks
 cargo run --release -- --gui
 ```
 

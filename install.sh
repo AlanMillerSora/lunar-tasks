@@ -41,7 +41,7 @@ if [ "${TASKS_RS_NO_SYSTEMD:-0}" != "1" ] && command -v systemctl >/dev/null 2>&
 fi
 
 cat <<MSG
-Installed:
+Lunar Tasks installed:
   $BIN_DIR/tasks-rs
   $APP_DIR/tasks-rs.desktop
   $ICON_DIR/tasks-rs.svg

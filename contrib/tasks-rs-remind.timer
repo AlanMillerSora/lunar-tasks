@@ -1,5 +1,5 @@
 [Unit]
-Description=Check Tasks reminders every minute
+Description=Check Lunar Tasks reminders every minute
 
 [Timer]
 OnBootSec=30

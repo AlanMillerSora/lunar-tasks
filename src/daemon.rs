@@ -51,7 +51,7 @@ impl ksni::Tray for TasksTray {
         "tasks-rs".into()
     }
     fn title(&self) -> String {
-        "Tasks".into()
+        "Lunar Tasks".into()
     }
     fn icon_name(&self) -> String {
         "tasks-rs".into()

@@ -1,5 +1,5 @@
 [Unit]
-Description=Tasks — desktop reminders (headless)
+Description=Lunar Tasks — desktop reminders (headless)
 After=graphical-session.target
 
 [Service]

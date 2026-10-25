@@ -13,7 +13,7 @@ use std::process::exit;
 
 fn usage() {
     println!(
-        "Tasks — native task manager with a resident tray daemon
+        "Lunar Tasks — native task manager with a resident tray daemon
 
 USAGE:
     tasks-rs [COMMAND]

@@ -1,8 +1,8 @@
 [Desktop Entry]
 Type=Application
-Name=Tasks
+Name=Lunar Tasks
 GenericName=Task manager
-Comment=Tree-shaped task manager with tags, due dates and reminders
+Comment=Lunar Tasks — tree-shaped task manager with tags, due dates and reminders
 Exec=@BIN@
 TryExec=@BIN@
 Icon=tasks-rs

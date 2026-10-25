@@ -287,7 +287,16 @@ pub fn parse_quick(text: &str) -> QuickParse {
 
 pub fn notify(title: &str, body: &str) {
     let _ = std::process::Command::new("notify-send")
-        .args(["-a", "Tasks", "-i", "tasks-rs", "-u", "normal", title, body])
+        .args([
+            "-a",
+            "Lunar Tasks",
+            "-i",
+            "tasks-rs",
+            "-u",
+            "normal",
+            title,
+            body,
+        ])
         .spawn();
 }
 
